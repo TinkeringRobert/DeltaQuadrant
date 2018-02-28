@@ -46,6 +46,7 @@ function initialize(){
     pjson.name,
     migrations,
     function(pool, err) {
+      portal.initialize(params, app);
       modules.initialize(params);
 
       app.listen(params.application_port.delta_quadrant, function () {
