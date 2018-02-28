@@ -1,2 +1,2 @@
-# RelayStation
-RelayStation (Communication from and to nodes) 
+# DeltaQuadrant
+DeltaQuadrant (udp Relaystation)

@@ -1,15 +1,11 @@
-var pjson = require('./package.json');
-
-// External requires
-var express = require('express');
 var bodyParser = require('body-parser');
-var app = express();
+var express = require('express');
+var pjson = require('./package.json');
 var winston = require('winston');
 
-//{ error: 0, warn: 1, info: 2, verbose: 3, debug: 4, silly: 5 }
-winston.level = 'silly';
-
+//*************************************************************************
 // Application settings
+//*************************************************************************
 var isWin = /^win/.test(process.platform);
 if (isWin){
   var params = require('../Gravitation/Windows');
@@ -17,44 +13,45 @@ if (isWin){
 else{
   var params = require('../Gravitation/Linux');
 }
+//{ error: 0, warn: 1, info: 2, verbose: 3, debug: 4, silly: 5 }
+winston.level = 'info';
 
+//*************************************************************************
 // Local requires
-var dbInit = require('./Config/DbInit');
+//*************************************************************************
+var dbInit = require('../Gravitation/Tools/dbInit');
+var migrations = require('./Config/migrations');
 var modules = require('./Controllers/ModuleInit');
+var portal = require('./Api/portal');
 
-//*******************
-// 1. Parse forms & JSON in body
-//*******************
+//*************************************************************************
+// Service http functions
+//*************************************************************************
+var app = express();
+
 app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
 
-app.get('/status', function (req, res) {
-  res.json(
-    {
-      status: 'online',
-      application: pjson.name,
-      version: pjson.version,
-      description: pjson.description
-    }
-  );
-});
-
+//*************************************************************************
+// Service initialisation
+//*************************************************************************
 function initialize(){
-  console.log('Boot Home automation server :: ' + pjson.name + ' :: ' + pjson.version);
+  winston.info('Boot :: ' + pjson.name + ' :: ' + pjson.version);
 
-  //infraRecv.initialize(params, broker);
-  dbInit.initialize(params.database.deltaquadrant, pjson.name, function() {
-    modules.initialize(params);
+  dbInit.initialize(
+    params.database,
+    params.database.deltaquadrant,
+    pjson.name,
+    migrations,
+    function(pool, err) {
+      modules.initialize(params);
 
-    app.listen(params.application_port.delta_quadrant, function () {
-        console.log('Server gestart op poort ' + params.application_port.relaystation);
+      app.listen(params.application_port.delta_quadrant, function () {
+      winston.info(pjson.name + ' server gestart op poort ' + params.application_port.delta_quadrant)
     });
-
-    winston.info("System started");
   });
-
 };
 
 initialize();
